@@ -10,16 +10,13 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import sars.model.Vigilante;
 
-
 public class MainPanelView {
 
     private final BorderPane root;
     private final Vigilante  vigilante;
     private final Stage      stage;
 
-
     private final StackPane contentArea = new StackPane();
-
 
     private AccesoView    accesoView;
     private AuditoriaView auditoriaView;
@@ -37,15 +34,12 @@ public class MainPanelView {
         root.setCenter(contentArea);
         root.setStyle("-fx-background-color: #0D1117;");
 
-
         mostrarAcceso();
     }
-
 
     private VBox buildSidebar() {
         VBox sidebar = new VBox(0);
         sidebar.getStyleClass().add("sidebar");
-
 
         VBox logoBox = new VBox(2);
         logoBox.setPadding(new Insets(24, 20, 20, 20));
@@ -58,7 +52,6 @@ public class MainPanelView {
         Separator sep = new Separator();
         sep.setStyle("-fx-background-color: #30363D;");
 
-
         Label lblSection = new Label("MENÚ");
         lblSection.setStyle("-fx-font-size: 10px; -fx-text-fill: #8B949E; -fx-padding: 16 20 4 20; -fx-font-weight: bold;");
 
@@ -68,37 +61,37 @@ public class MainPanelView {
         btnAcceso.setOnAction(e -> mostrarAcceso());
         btnAuditoria.setOnAction(e -> mostrarAuditoria());
 
-
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        VBox bottomContainer = new VBox(0);
+        bottomContainer.setPadding(new Insets(12, 0, 0, 0));
 
         VBox vigilanteBox = new VBox(2);
         vigilanteBox.setPadding(new Insets(12, 16, 16, 16));
         vigilanteBox.setStyle("-fx-background-color: #1C2128; -fx-background-radius: 8; -fx-border-color: #30363D; -fx-border-radius: 8;");
-        vigilanteBox.setMargin(vigilanteBox, new Insets(0, 12, 12, 12));
+        VBox.setMargin(vigilanteBox, new Insets(0, 12, 4, 12));
         Label lNom   = new Label("👤 " + vigilante.getNomVigilante());
         lNom.setStyle("-fx-font-size: 12px; -fx-text-fill: #E6EDF3; -fx-font-weight: bold;");
         Label lTurno = new Label("Turno: " + vigilante.getTurno());
         lTurno.setStyle("-fx-font-size: 11px; -fx-text-fill: #8B949E;");
         vigilanteBox.getChildren().addAll(lNom, lTurno);
-        VBox.setMargin(vigilanteBox, new Insets(0, 12, 12, 12));
 
         Button btnLogout = new Button("Cerrar sesión");
-        btnLogout.setStyle("-fx-background-color: transparent; -fx-text-fill: #E84040; -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 8 20;");
+        btnLogout.setStyle("-fx-background-color: transparent; -fx-text-fill: #E84040; -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 8 20 16 20;");
         btnLogout.setMaxWidth(Double.MAX_VALUE);
         btnLogout.setOnAction(e -> cerrarSesion());
 
-        sidebar.getChildren().addAll(logoBox, sep, lblSection, btnAcceso, btnAuditoria,
-                spacer, vigilanteBox, btnLogout);
+        bottomContainer.getChildren().addAll(vigilanteBox, btnLogout);
+
+        sidebar.getChildren().addAll(logoBox, sep, lblSection, btnAcceso, btnAuditoria, spacer, bottomContainer);
         return sidebar;
     }
-
 
     private HBox buildTopBar() {
         HBox bar = new HBox();
         bar.getStyleClass().add("top-bar");
         bar.setAlignment(Pos.CENTER_RIGHT);
-
 
         Label reloj = new Label();
         reloj.setStyle("-fx-font-size: 13px; -fx-text-fill: #8B949E; -fx-font-family: 'Consolas';");
@@ -112,7 +105,6 @@ public class MainPanelView {
         bar.getChildren().add(reloj);
         return bar;
     }
-
 
     private void mostrarAcceso() {
         setActivo(btnAcceso, btnAuditoria);

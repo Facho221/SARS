@@ -3,6 +3,8 @@ package sars.view;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -20,22 +22,35 @@ public class LoginView {
         root.setStyle("-fx-background-color: #0D1117;");
         root.setPrefSize(480, 560);
 
-
         VBox card = new VBox(20);
         card.getStyleClass().add("login-card");
         card.setAlignment(Pos.TOP_LEFT);
         card.setMaxWidth(360);
 
+        VBox headerBox = new VBox(4);
+        headerBox.setAlignment(Pos.CENTER);
+        headerBox.setMaxWidth(Double.MAX_VALUE);
+
+        ImageView logoImg = new ImageView();
+        try {
+            logoImg.setImage(new Image(getClass().getResourceAsStream("/images/logo.png")));
+            logoImg.setFitWidth(180);
+            logoImg.setFitHeight(180);
+            logoImg.setPreserveRatio(true);
+        } catch (Exception e) {
+            System.err.println("No se pudo cargar el logo: " + e.getMessage());
+        }
 
         Text logo = new Text("SARS");
-        logo.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-fill: #1F6FEB;");
+        logo.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-fill: #1F6FEB; -fx-padding: 4 0 0 0;");
 
-        Text subtitle = new Text("Smart Access Residential System");
-        subtitle.setStyle("-fx-font-size: 13px; -fx-fill: #8B949E;");
+        Text subtitle = new Text("SMART-ACCESS RESIDENTIAL SYSTEM");
+        subtitle.setStyle("-fx-font-size: 11px; -fx-fill: #00A3A3; -fx-font-weight: bold; -fx-letter-spacing: 1px;");
+
+        headerBox.getChildren().addAll(logoImg, logo, subtitle);
 
         Separator sep = new Separator();
         sep.setStyle("-fx-background-color: #30363D;");
-
 
         Label lblUser = new Label("Usuario");
         lblUser.getStyleClass().add("form-label");
@@ -52,12 +67,10 @@ public class LoginView {
         Label lblError = new Label("");
         lblError.setStyle("-fx-text-fill: #E84040; -fx-font-size: 12px;");
 
-
-        Button btnLogin = new Button("Ingresar al sistema");
+        Button btnLogin = new Button("Iniciar sesión");
         btnLogin.getStyleClass().add("btn-primary");
         btnLogin.setMaxWidth(Double.MAX_VALUE);
         btnLogin.setPrefHeight(42);
-
 
         Runnable doLogin = () -> {
             String u = txtUser.getText().trim();
@@ -70,7 +83,6 @@ public class LoginView {
                 VigilanteDAO dao = new VigilanteDAO();
                 Vigilante vig = dao.login(u, p);
                 if (vig != null) {
-
                     MainPanelView panel = new MainPanelView(stage, vig);
                     javafx.scene.Scene scene = new javafx.scene.Scene(panel.getRoot(), 1200, 720);
                     scene.getStylesheets().add(getClass().getResource(sars.MainApp.CSS_PATH).toExternalForm());
@@ -91,7 +103,7 @@ public class LoginView {
         btnLogin.setOnAction(e -> doLogin.run());
         txtPass.setOnAction(e -> doLogin.run());
 
-        card.getChildren().addAll(logo, subtitle, sep, lblUser, txtUser, lblPass, txtPass, lblError, btnLogin);
+        card.getChildren().addAll(headerBox, sep, lblUser, txtUser, lblPass, txtPass, lblError, btnLogin);
         root.getChildren().add(card);
     }
 
