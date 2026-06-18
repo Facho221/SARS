@@ -7,16 +7,18 @@ import javafx.geometry.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import sars.arduino.ArduinoReader;
-import sars.dao.*;
+import sars.dao.TagDAO;
+import sars.dao.VisitanteDAO;
 import sars.model.*;
+import sars.service.AlertaService;
+import sars.service.EstanciaService;
+import sars.service.TagService;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
 
 public class AccesoView {
 
@@ -24,9 +26,11 @@ public class AccesoView {
     private final Vigilante  vigilante;
 
     private final ObservableList<Estancia> estanciasData = FXCollections.observableArrayList();
-    private final EstanciaDAO  estanciaDAO  = new EstanciaDAO();
-    private final VisitanteDAO visitanteDAO = new VisitanteDAO();
-    private final TagDAO       tagDAO       = new TagDAO();
+    private final EstanciaService estanciaService = new EstanciaService();
+    private final TagService      tagService      = new TagService();
+    private final AlertaService   alertaService   = new AlertaService();
+    private final VisitanteDAO    visitanteDAO    = new VisitanteDAO();
+    private final TagDAO          tagDAO          = new TagDAO();
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -40,10 +44,8 @@ public class AccesoView {
         this.vigilante = vigilante;
         root = new BorderPane();
         root.setStyle("-fx-background-color: #0D1117; -fx-padding: 20;");
-
         root.setLeft(buildFormulario());
         root.setCenter(buildTabla());
-
         iniciarMonitoreo();
     }
 
@@ -53,7 +55,6 @@ public class AccesoView {
         form.setPrefWidth(320);
         form.setMaxWidth(320);
         BorderPane.setMargin(form, new Insets(0, 16, 0, 0));
-
 
         Text title = new Text("Registro de Ingreso");
         title.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-fill: #E6EDF3;");
@@ -83,11 +84,11 @@ public class AccesoView {
             if (!focused && !txtDni.getText().isEmpty()) autocompletarVisitante();
         });
 
-        txtNombre     = field("Nombre completo *", "Ej: Juan Pérez");
-        cbTipo        = combo("Tipo de visita *", "Familiar","Delivery","Proveedor","Residente","Otro");
-        cbSubtipo     = combo("Subtipo", "Externo","Residente","Negocio");
-        txtDestino    = field("Destino (Lote/Dpto) *", "Ej: Lote 12 / Dpto 3B");
-        cbTipoIngreso = combo("Tipo de ingreso *", "Peatón","Vehículo");
+        txtNombre       = field("Nombre completo *", "Ej: Juan Pérez");
+        cbTipo          = combo("Tipo de visita *", "Familiar","Delivery","Proveedor","Residente","Otro");
+        cbSubtipo       = combo("Subtipo", "Externo","Residente","Negocio");
+        txtDestino      = field("Destino (Lote/Dpto) *", "Ej: Lote 12 / Dpto 3B");
+        cbTipoIngreso   = combo("Tipo de ingreso *", "Peatón","Vehículo");
         txtDescVehiculo = field("Desc. vehículo (opcional)", "Placa, color, modelo");
         txtDescVehiculo.setDisable(true);
 
@@ -142,11 +143,11 @@ public class AccesoView {
         VBox.setVgrow(tabla, Priority.ALWAYS);
 
         tabla.getColumns().addAll(
-                col("ID",         "idEstancia",      60),
-                col("Visitante",  "nombreVisitante", 150),
-                col("Tipo",       "tipoVisitante",   90),
-                col("Destino",    "destino",         120),
-                col("Tag",        "codigoRfid",      90),
+                col("ID",        "idEstancia",      60),
+                col("Visitante", "nombreVisitante", 150),
+                col("Tipo",      "tipoVisitante",   90),
+                col("Destino",   "destino",         120),
+                col("Tag",       "codigoRfid",      90),
                 colHora(),
                 colTiempo(),
                 colEstado(),
@@ -154,7 +155,9 @@ public class AccesoView {
         );
 
         box.getChildren().addAll(
-                new Text("{{ Estancias Activas }}") {{ setStyle("-fx-font-size:15px; -fx-font-weight:bold; -fx-fill:#E6EDF3;"); }},
+                new Text("{{ Estancias Activas }}") {{
+                    setStyle("-fx-font-size:15px; -fx-font-weight:bold; -fx-fill:#E6EDF3;");
+                }},
                 metricas, tabla
         );
         return box;
@@ -211,7 +214,7 @@ public class AccesoView {
         col.setCellFactory(tc -> new TableCell<>() {
             private final Button btn = new Button("Cerrar");
             { btn.getStyleClass().add("btn-danger");
-              btn.setOnAction(e -> cerrarEstancia(getTableRow().getItem())); }
+                btn.setOnAction(e -> cerrarEstancia(getTableRow().getItem())); }
             @Override protected void updateItem(Void v, boolean empty) {
                 super.updateItem(v, empty);
                 setGraphic(empty ? null : btn);
@@ -219,7 +222,6 @@ public class AccesoView {
         });
         return col;
     }
-
 
     private void conectarArduino(String puerto, Button btnConectar) {
         if (puerto == null || puerto.isEmpty()) {
@@ -234,53 +236,36 @@ public class AccesoView {
     private void onTagLeido(String codigoRfid) {
         lblRfidLeido.setText(codigoRfid);
         lblRfidLeido.getStyleClass().add("rfid-flash");
-
         new Timeline(new KeyFrame(Duration.seconds(1), e ->
                 lblRfidLeido.getStyleClass().remove("rfid-flash"))).play();
-
         try {
-            tagSeleccionado = tagDAO.buscarPorRfid(codigoRfid);
-            if (tagSeleccionado == null) lblRfidLeido.setText("⚠ Tag no registrado: " + codigoRfid);
+            tagSeleccionado = tagService.buscarPorRfid(codigoRfid);
+            if (tagSeleccionado == null)
+                lblRfidLeido.setText("⚠ Tag no registrado: " + codigoRfid);
             else if ("Asignado".equals(tagSeleccionado.getEstadoTag()))
                 lblRfidLeido.setText("⚠ Tag ya asignado: " + codigoRfid);
-        } catch (Exception ex) { ex.printStackTrace(); }
+        } catch (Exception ex) {
+            lblRfidLeido.setText("⚠ " + ex.getMessage());
+        }
     }
 
     private void registrarEstancia() {
         if (!validar()) return;
         try {
-
-            Visitante v = new Visitante(
+            estanciaService.registrarIngreso(
                     txtDni.getText().trim(),
                     txtNombre.getText().trim(),
                     cbTipo.getValue(),
                     cbSubtipo.getValue(),
-                    null
+                    txtDestino.getText().trim(),
+                    cbTipoIngreso.getValue(),
+                    txtDescVehiculo.getText().trim(),
+                    Integer.parseInt(cbTiempoMax.getValue()),
+                    vigilante.getIdVigilante(),
+                    tagSeleccionado
             );
-            visitanteDAO.registrar(v);
-
-
-            if (tagSeleccionado == null) {
-                List<Tag> tags = tagDAO.listarDisponibles();
-                if (tags.isEmpty()) { alert("Sin tags", "No hay tags RFID disponibles."); return; }
-                tagSeleccionado = tags.get(0);
-            }
-
-            Estancia e = new Estancia();
-            e.setDniVisitante(txtDni.getText().trim());
-            e.setDestino(txtDestino.getText().trim());
-            e.setTipoIngreso(cbTipoIngreso.getValue());
-            e.setDescVehiculo(txtDescVehiculo.getText().trim());
-            e.setTiempoMaxMinutos(Integer.parseInt(cbTiempoMax.getValue()));
-            e.setIdTag(tagSeleccionado.getIdTag());
-            e.setIdVigilante(vigilante.getIdVigilante());
-
-            estanciaDAO.registrar(e);
-            tagDAO.asignar(tagSeleccionado.getIdTag());
-
             limpiarFormulario();
             cargarEstancias();
-
         } catch (Exception ex) {
             alert("Error", ex.getMessage());
             ex.printStackTrace();
@@ -290,7 +275,7 @@ public class AccesoView {
     private void cerrarEstancia(Estancia e) {
         if (e == null) return;
         try {
-            estanciaDAO.cerrar(e.getIdEstancia());
+            estanciaService.cerrarEstancia(e.getIdEstancia());
             cargarEstancias();
         } catch (Exception ex) { alert("Error", ex.getMessage()); }
     }
@@ -308,10 +293,9 @@ public class AccesoView {
 
     private void cargarEstancias() {
         try {
-            estanciasData.setAll(estanciaDAO.listarActivas());
+            estanciasData.setAll(estanciaService.obtenerActivas());
         } catch (Exception ex) { ex.printStackTrace(); }
     }
-
 
     private void iniciarMonitoreo() {
         cargarEstancias();
@@ -324,19 +308,12 @@ public class AccesoView {
     }
 
     private void verificarAlertas() {
-        for (Estancia e : estanciasData) {
-            if ("Finalizado".equals(e.getEstado())) continue;
-            long mins = java.time.Duration.between(
-                    e.getHoraIngreso(), java.time.LocalDateTime.now()).toMinutes();
-            try {
-                if (mins >= e.getTiempoMaxMinutos()) {
-                    estanciaDAO.actualizarEstado(e.getIdEstancia(), "Alerta");
-                    mostrarModalAlerta(e);
-                } else if (mins >= e.getTiempoMaxMinutos() * 0.8) {
-                    estanciaDAO.actualizarEstado(e.getIdEstancia(), "Advertencia");
-                }
-            } catch (Exception ex) { ex.printStackTrace(); }
-        }
+        try {
+            List<Estancia> alertadas = alertaService.verificarAlertas();
+            for (Estancia e : alertadas) {
+                mostrarModalAlerta(e);
+            }
+        } catch (Exception ex) { ex.printStackTrace(); }
     }
 
     private void mostrarModalAlerta(Estancia e) {
@@ -345,12 +322,11 @@ public class AccesoView {
         alert.setHeaderText("Tiempo excedido — " + e.getNombreVisitante());
         alert.setContentText(
                 "Destino: " + e.getDestino() + "\n" +
-                "Tag: " + e.getCodigoRfid() + "\n" +
-                "Tiempo máximo: " + e.getTiempoMaxMinutos() + " min\n\n" +
-                "Por favor verifica la situación del visitante.");
+                        "Tag: " + e.getCodigoRfid() + "\n" +
+                        "Tiempo máximo: " + e.getTiempoMaxMinutos() + " min\n\n" +
+                        "Por favor verifica la situación del visitante.");
         alert.showAndWait();
     }
-
 
     private boolean validar() {
         if (txtDni.getText().trim().isEmpty())     { alert("Campo requerido","Ingresa el DNI."); return false; }
@@ -401,8 +377,10 @@ public class AccesoView {
     private VBox metricCard(String label, String value, String color) {
         VBox card = new VBox(2);
         card.setStyle("-fx-background-color: #1C2128; -fx-background-radius:8; -fx-padding:12; -fx-min-width:90;");
-        Label lbl = new Label(label); lbl.setStyle("-fx-font-size:10px; -fx-text-fill:#8B949E; -fx-font-weight:bold;");
-        Label val = new Label(value);  val.setStyle("-fx-font-size:22px; -fx-font-weight:bold; -fx-text-fill:" + color + ";");
+        Label lbl = new Label(label);
+        lbl.setStyle("-fx-font-size:10px; -fx-text-fill:#8B949E; -fx-font-weight:bold;");
+        Label val = new Label(value);
+        val.setStyle("-fx-font-size:22px; -fx-font-weight:bold; -fx-text-fill:" + color + ";");
         card.getChildren().addAll(lbl, val);
         HBox.setHgrow(card, Priority.ALWAYS);
         return card;
