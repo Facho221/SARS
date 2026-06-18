@@ -10,15 +10,18 @@ import javafx.scene.text.Text;
 import sars.dao.EstanciaDAO;
 import sars.model.Estancia;
 
+import com.lowagie.text.Document;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+
+import java.io.File;
+import java.io.FileOutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/**
- * Pantalla de auditoría e historial.
- * Filtros por fecha, estado. Exportación PDF/CSV.
- */
 public class AuditoriaView {
 
     private final VBox root;
@@ -27,10 +30,8 @@ public class AuditoriaView {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-
-    private DatePicker   dpDesde, dpHasta;
+    private DatePicker dpDesde, dpHasta;
     private ComboBox<String> cbEstado;
-
 
     private Label lblTotal, lblAlertas, lblAtendidas, lblPromedio;
 
@@ -47,7 +48,6 @@ public class AuditoriaView {
         cargar();
     }
 
-
     private HBox buildHeader() {
         HBox hb = new HBox();
         hb.setAlignment(Pos.CENTER_LEFT);
@@ -56,7 +56,6 @@ public class AuditoriaView {
         hb.getChildren().add(t);
         return hb;
     }
-
 
     private HBox buildMetricas() {
         lblTotal     = metricLabel("0");
@@ -72,7 +71,6 @@ public class AuditoriaView {
         );
         return row;
     }
-
 
     private VBox buildFiltros() {
         VBox card = new VBox(12);
@@ -120,7 +118,6 @@ public class AuditoriaView {
         return card;
     }
 
-
     private VBox buildTabla() {
         VBox box = new VBox(8);
         box.getStyleClass().add("card");
@@ -151,7 +148,6 @@ public class AuditoriaView {
         );
         return box;
     }
-
 
     private <T> TableColumn<Estancia, T> colSimple(String h, String prop, int w) {
         TableColumn<Estancia, T> c = new TableColumn<>(h);
@@ -205,7 +201,6 @@ public class AuditoriaView {
         return col;
     }
 
-
     private void cargar() {
         try {
             LocalDateTime desde = dpDesde.getValue().atStartOfDay();
@@ -232,13 +227,18 @@ public class AuditoriaView {
         lblPromedio.setText(String.format("%.0f min", promedio));
     }
 
-
     private void exportarCsv() {
         javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
         fc.setTitle("Guardar CSV");
         fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("CSV","*.csv"));
         fc.setInitialFileName("sars_historial.csv");
-        java.io.File archivo = fc.showSaveDialog(root.getScene().getWindow());
+
+        javafx.stage.Window ventana = null;
+        if (root != null && root.getScene() != null) {
+            ventana = root.getScene().getWindow();
+        }
+
+        java.io.File archivo = fc.showSaveDialog(ventana);
         if (archivo == null) return;
 
         try (java.io.PrintWriter pw = new java.io.PrintWriter(archivo)) {
@@ -261,10 +261,67 @@ public class AuditoriaView {
     }
 
     private void exportarPdf() {
-        alert("PDF", "Para exportar PDF agrega la dependencia iText o Apache PDFBox al proyecto.\n" +
-                "Mientras tanto usa 'Exportar CSV' e importa en Excel.");
-    }
+        javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+        fc.setTitle("Guardar Reporte PDF");
+        fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("PDF", "*.pdf"));
+        fc.setInitialFileName("sars_reporte_auditoria.pdf");
 
+        javafx.stage.Window ventana = null;
+        if (root != null && root.getScene() != null) {
+            ventana = root.getScene().getWindow();
+        }
+
+        File archivo = fc.showSaveDialog(ventana);
+        if (archivo == null) return;
+
+        Document documento = new Document();
+        try {
+            PdfWriter.getInstance(documento, new FileOutputStream(archivo));
+            documento.open();
+
+            documento.add(new Paragraph("SMART-ACCESS RESIDENTIAL SYSTEM (SARS)"));
+            documento.add(new Paragraph("REPORTE CONSOLIDADO DE AUDITORIA E HISTORIAL"));
+            documento.add(new Paragraph("Fecha de reporte: " + LocalDateTime.now().format(FMT)));
+            documento.add(new Paragraph("Total registros encontrados: " + historialData.size() + "\n\n"));
+
+            PdfPTable tablaPDF = new PdfPTable(10);
+            tablaPDF.setWidthPercentage(100);
+
+            tablaPDF.addCell("ID");
+            tablaPDF.addCell("Visitante");
+            tablaPDF.addCell("DNI");
+            tablaPDF.addCell("Tipo");
+            tablaPDF.addCell("Destino");
+            tablaPDF.addCell("Ingreso");
+            tablaPDF.addCell("Salida");
+            tablaPDF.addCell("Duracion");
+            tablaPDF.addCell("Estado");
+            tablaPDF.addCell("Tag");
+
+            for (Estancia e : historialData) {
+                LocalDateTime fin = e.getHoraSalida() != null ? e.getHoraSalida() : LocalDateTime.now();
+                long mins = e.getHoraIngreso() != null ? java.time.Duration.between(e.getHoraIngreso(), fin).toMinutes() : 0;
+
+                tablaPDF.addCell(String.valueOf(e.getIdEstancia()));
+                tablaPDF.addCell(e.getNombreVisitante() != null ? e.getNombreVisitante() : "");
+                tablaPDF.addCell(e.getDniVisitante() != null ? e.getDniVisitante() : "");
+                tablaPDF.addCell(e.getTipoVisitante() != null ? e.getTipoVisitante() : "");
+                tablaPDF.addCell(e.getDestino() != null ? e.getDestino() : "");
+                tablaPDF.addCell(e.getHoraIngreso() != null ? e.getHoraIngreso().format(FMT) : "");
+                tablaPDF.addCell(e.getHoraSalida() != null ? e.getHoraSalida().format(FMT) : "");
+                tablaPDF.addCell(mins + " min");
+                tablaPDF.addCell(e.getEstado() != null ? e.getEstado() : "");
+                tablaPDF.addCell(e.getCodigoRfid() != null ? e.getCodigoRfid() : "");
+            }
+
+            documento.add(tablaPDF);
+            alert("Exportado", "PDF generado con éxito en:\n" + archivo.getAbsolutePath());
+        } catch (Exception ex) {
+            alert("Error", "No se pudo generar el archivo PDF: " + ex.getMessage());
+        } finally {
+            documento.close();
+        }
+    }
 
     private HBox labeled(String label, Control control) {
         Label lbl = new Label(label); lbl.setStyle("-fx-font-size:11px; -fx-text-fill:#8B949E;");
