@@ -16,6 +16,7 @@ import sars.model.*;
 import sars.service.AlertaService;
 import sars.service.EstanciaService;
 import sars.service.TagService;
+import javafx.application.Platform;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -325,7 +326,11 @@ public class AccesoView {
                         "Tag: " + e.getCodigoRfid() + "\n" +
                         "Tiempo máximo: " + e.getTiempoMaxMinutos() + " min\n\n" +
                         "Por favor verifica la situación del visitante.");
-        alert.showAndWait();
+
+        // De esta manera JavaFX saca el modal de la animación y lo agenda de forma segura
+        Platform.runLater(() -> {
+            alert.showAndWait();
+        });
     }
 
     private boolean validar() {
