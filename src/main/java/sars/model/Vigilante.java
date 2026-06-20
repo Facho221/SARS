@@ -6,6 +6,7 @@ public class Vigilante {
     private String turno;
     private String usuario;
     private String contrasena;
+    private String rol;
 
     public Vigilante() {}
 
@@ -19,4 +20,6 @@ public class Vigilante {
     public void   setUsuario(String v)       { this.usuario = v; }
     public String getContrasena()            { return contrasena; }
     public void   setContrasena(String v)    { this.contrasena = v; }
+    public String getRol() { return rol; }
+    public void setRol(String v) { rol = v; }
 }

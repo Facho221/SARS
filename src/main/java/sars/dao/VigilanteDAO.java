@@ -18,6 +18,7 @@ public class VigilanteDAO {
                 vig.setNomVigilante(rs.getString("nom_vigilante"));
                 vig.setTurno(rs.getString("turno"));
                 vig.setUsuario(rs.getString("usuario"));
+                vig.setRol(rs.getString("rol"));
                 return vig;
             }
         }

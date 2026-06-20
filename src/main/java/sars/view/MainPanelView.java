@@ -43,9 +43,9 @@ public class MainPanelView {
 
         VBox logoBox = new VBox(2);
         logoBox.setPadding(new Insets(24, 20, 20, 20));
-        Text logo     = new Text("SARS");
+        Text logo    = new Text("SARS");
         logo.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-fill: #1F6FEB;");
-        Text logoSub  = new Text("v1.0  •  " + vigilante.getTurno());
+        Text logoSub = new Text("v1.0  •  " + vigilante.getTurno());
         logoSub.setStyle("-fx-font-size: 11px; -fx-fill: #8B949E;");
         logoBox.getChildren().addAll(logo, logoSub);
 
@@ -55,11 +55,8 @@ public class MainPanelView {
         Label lblSection = new Label("MENÚ");
         lblSection.setStyle("-fx-font-size: 10px; -fx-text-fill: #8B949E; -fx-padding: 16 20 4 20; -fx-font-weight: bold;");
 
-        btnAcceso    = sidebarBtn("⬡  Panel de Control");
-        btnAuditoria = sidebarBtn("⊞  Auditoría");
-
+        btnAcceso = sidebarBtn("⬡  Panel de Control");
         btnAcceso.setOnAction(e -> mostrarAcceso());
-        btnAuditoria.setOnAction(e -> mostrarAuditoria());
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -84,7 +81,15 @@ public class MainPanelView {
 
         bottomContainer.getChildren().addAll(vigilanteBox, btnLogout);
 
-        sidebar.getChildren().addAll(logoBox, sep, lblSection, btnAcceso, btnAuditoria, spacer, bottomContainer);
+        if ("admin".equals(vigilante.getRol())) {
+            btnAuditoria = sidebarBtn("⊞  Auditoría");
+            btnAuditoria.setOnAction(e -> mostrarAuditoria());
+            sidebar.getChildren().addAll(logoBox, sep, lblSection, btnAcceso, btnAuditoria, spacer, bottomContainer);
+        } else {
+            btnAuditoria = new Button();
+            sidebar.getChildren().addAll(logoBox, sep, lblSection, btnAcceso, spacer, bottomContainer);
+        }
+
         return sidebar;
     }
 
