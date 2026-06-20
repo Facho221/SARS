@@ -22,6 +22,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import com.lowagie.text.Document;
+import com.lowagie.text.Font;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+
 public class AuditoriaView {
 
     private final VBox root;
@@ -241,14 +250,19 @@ public class AuditoriaView {
         java.io.File archivo = fc.showSaveDialog(ventana);
         if (archivo == null) return;
 
-        try (java.io.PrintWriter pw = new java.io.PrintWriter(archivo)) {
-            pw.println("ID,Visitante,DNI,Tipo,Destino,Ingreso,Salida,Duracion,Estado,Tag");
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(
+                new java.io.OutputStreamWriter(
+                        new java.io.FileOutputStream(archivo),
+                        java.nio.charset.StandardCharsets.UTF_8))) {
+
+            pw.write('\uFEFF');
+            pw.println("ID;Visitante;DNI;Tipo;Destino;Ingreso;Salida;Duracion;Estado;Tag");
             DateTimeFormatter f = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
             for (Estancia e : historialData) {
                 LocalDateTime fin = e.getHoraSalida() != null ? e.getHoraSalida() : LocalDateTime.now();
                 long mins = e.getHoraIngreso() != null
                         ? java.time.Duration.between(e.getHoraIngreso(), fin).toMinutes() : 0;
-                pw.printf("%d,%s,%s,%s,%s,%s,%s,%d min,%s,%s%n",
+                pw.printf("%d;%s;%s;%s;%s;%s;%s;%d min;%s;%s%n",
                         e.getIdEstancia(),
                         e.getNombreVisitante(), e.getDniVisitante(), e.getTipoVisitante(),
                         e.getDestino(),
@@ -279,39 +293,46 @@ public class AuditoriaView {
             PdfWriter.getInstance(documento, new FileOutputStream(archivo));
             documento.open();
 
-            documento.add(new Paragraph("SMART-ACCESS RESIDENTIAL SYSTEM (SARS)"));
-            documento.add(new Paragraph("REPORTE CONSOLIDADO DE AUDITORIA E HISTORIAL"));
-            documento.add(new Paragraph("Fecha de reporte: " + LocalDateTime.now().format(FMT)));
-            documento.add(new Paragraph("Total registros encontrados: " + historialData.size() + "\n\n"));
+            com.lowagie.text.Font fontTitulo = new com.lowagie.text.Font(
+                    com.lowagie.text.Font.TIMES_ROMAN, 14,
+                    com.lowagie.text.Font.BOLD);
+            com.lowagie.text.Font fontNormal = new com.lowagie.text.Font(
+                    com.lowagie.text.Font.TIMES_ROMAN, 10);
+            com.lowagie.text.Font fontHeader = new com.lowagie.text.Font(
+                    com.lowagie.text.Font.TIMES_ROMAN, 9,
+                    com.lowagie.text.Font.BOLD);
+
+            documento.add(new Paragraph("SMART-ACCESS RESIDENTIAL SYSTEM (SARS)", fontTitulo));
+            documento.add(new Paragraph("REPORTE CONSOLIDADO DE AUDITORIA E HISTORIAL", fontNormal));
+            documento.add(new Paragraph("Fecha de reporte: " + LocalDateTime.now().format(FMT), fontNormal));
+            documento.add(new Paragraph("Total registros encontrados: " + historialData.size() + "\n\n", fontNormal));
 
             PdfPTable tablaPDF = new PdfPTable(10);
             tablaPDF.setWidthPercentage(100);
 
-            tablaPDF.addCell("ID");
-            tablaPDF.addCell("Visitante");
-            tablaPDF.addCell("DNI");
-            tablaPDF.addCell("Tipo");
-            tablaPDF.addCell("Destino");
-            tablaPDF.addCell("Ingreso");
-            tablaPDF.addCell("Salida");
-            tablaPDF.addCell("Duracion");
-            tablaPDF.addCell("Estado");
-            tablaPDF.addCell("Tag");
+            String[] headers = {"ID","Visitante","DNI","Tipo","Destino","Ingreso","Salida","Duracion","Estado","Tag"};
+            for (String h : headers) {
+                PdfPCell cell = new PdfPCell(new Paragraph(h, fontHeader));
+                cell.setBackgroundColor(new java.awt.Color(200, 200, 200));
+                cell.setPadding(4);
+                tablaPDF.addCell(cell);
+            }
 
             for (Estancia e : historialData) {
                 LocalDateTime fin = e.getHoraSalida() != null ? e.getHoraSalida() : LocalDateTime.now();
-                long mins = e.getHoraIngreso() != null ? java.time.Duration.between(e.getHoraIngreso(), fin).toMinutes() : 0;
+                long mins = e.getHoraIngreso() != null
+                        ? java.time.Duration.between(e.getHoraIngreso(), fin).toMinutes() : 0;
 
-                tablaPDF.addCell(String.valueOf(e.getIdEstancia()));
-                tablaPDF.addCell(e.getNombreVisitante() != null ? e.getNombreVisitante() : "");
-                tablaPDF.addCell(e.getDniVisitante() != null ? e.getDniVisitante() : "");
-                tablaPDF.addCell(e.getTipoVisitante() != null ? e.getTipoVisitante() : "");
-                tablaPDF.addCell(e.getDestino() != null ? e.getDestino() : "");
-                tablaPDF.addCell(e.getHoraIngreso() != null ? e.getHoraIngreso().format(FMT) : "");
-                tablaPDF.addCell(e.getHoraSalida() != null ? e.getHoraSalida().format(FMT) : "");
-                tablaPDF.addCell(mins + " min");
-                tablaPDF.addCell(e.getEstado() != null ? e.getEstado() : "");
-                tablaPDF.addCell(e.getCodigoRfid() != null ? e.getCodigoRfid() : "");
+                tablaPDF.addCell(new Paragraph(String.valueOf(e.getIdEstancia()), fontNormal));
+                tablaPDF.addCell(new Paragraph(e.getNombreVisitante() != null ? e.getNombreVisitante() : "", fontNormal));
+                tablaPDF.addCell(new Paragraph(e.getDniVisitante() != null ? e.getDniVisitante() : "", fontNormal));
+                tablaPDF.addCell(new Paragraph(e.getTipoVisitante() != null ? e.getTipoVisitante() : "", fontNormal));
+                tablaPDF.addCell(new Paragraph(e.getDestino() != null ? e.getDestino() : "", fontNormal));
+                tablaPDF.addCell(new Paragraph(e.getHoraIngreso() != null ? e.getHoraIngreso().format(FMT) : "", fontNormal));
+                tablaPDF.addCell(new Paragraph(e.getHoraSalida() != null ? e.getHoraSalida().format(FMT) : "", fontNormal));
+                tablaPDF.addCell(new Paragraph(mins + " min", fontNormal));
+                tablaPDF.addCell(new Paragraph(e.getEstado() != null ? e.getEstado() : "", fontNormal));
+                tablaPDF.addCell(new Paragraph(e.getCodigoRfid() != null ? e.getCodigoRfid() : "", fontNormal));
             }
 
             documento.add(tablaPDF);
