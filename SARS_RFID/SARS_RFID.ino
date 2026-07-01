@@ -10,6 +10,8 @@ void setup() {
   Serial.begin(9600);
   SPI.begin();
   rfid.PCD_Init();
+  Serial.print("Versión del lector: 0x");
+  Serial.println(rfid.PCD_ReadRegister(rfid.VersionReg), HEX);
   Serial.println("SARS - Lector RFID listo");
 }
 
