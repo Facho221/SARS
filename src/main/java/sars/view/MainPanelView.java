@@ -43,9 +43,9 @@ public class MainPanelView {
 
         VBox logoBox = new VBox(2);
         logoBox.setPadding(new Insets(24, 20, 20, 20));
-        Text logo     = new Text("SARS");
+        Text logo    = new Text("SARS");
         logo.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-fill: #1F6FEB;");
-        Text logoSub  = new Text("v1.0  •  " + vigilante.getTurno());
+        Text logoSub = new Text("v1.0  •  " + vigilante.getTurno());
         logoSub.setStyle("-fx-font-size: 11px; -fx-fill: #8B949E;");
         logoBox.getChildren().addAll(logo, logoSub);
 
@@ -55,17 +55,11 @@ public class MainPanelView {
         Label lblSection = new Label("MENÚ");
         lblSection.setStyle("-fx-font-size: 10px; -fx-text-fill: #8B949E; -fx-padding: 16 20 4 20; -fx-font-weight: bold;");
 
-        btnAcceso    = sidebarBtn("⬡  Panel de Control");
-        btnAuditoria = sidebarBtn("⊞  Auditoría");
-
+        btnAcceso = sidebarBtn("⬡  Panel de Control");
         btnAcceso.setOnAction(e -> mostrarAcceso());
-        btnAuditoria.setOnAction(e -> mostrarAuditoria());
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
-
-        VBox bottomContainer = new VBox(0);
-        bottomContainer.setPadding(new Insets(12, 0, 0, 0));
 
         VBox vigilanteBox = new VBox(2);
         vigilanteBox.setPadding(new Insets(12, 16, 16, 16));
@@ -82,9 +76,19 @@ public class MainPanelView {
         btnLogout.setMaxWidth(Double.MAX_VALUE);
         btnLogout.setOnAction(e -> cerrarSesion());
 
+        VBox bottomContainer = new VBox(0);
+        bottomContainer.setPadding(new Insets(12, 0, 0, 0));
         bottomContainer.getChildren().addAll(vigilanteBox, btnLogout);
 
-        sidebar.getChildren().addAll(logoBox, sep, lblSection, btnAcceso, btnAuditoria, spacer, bottomContainer);
+        if ("admin".equals(vigilante.getRol())) {
+            btnAuditoria = sidebarBtn("⊞  Auditoría");
+            btnAuditoria.setOnAction(e -> mostrarAuditoria());
+            sidebar.getChildren().addAll(logoBox, sep, lblSection, btnAcceso, btnAuditoria, spacer, bottomContainer);
+        } else {
+            btnAuditoria = new Button();
+            sidebar.getChildren().addAll(logoBox, sep, lblSection, btnAcceso, spacer, bottomContainer);
+        }
+
         return sidebar;
     }
 
@@ -113,14 +117,17 @@ public class MainPanelView {
     }
 
     private void mostrarAuditoria() {
+        if (!"admin".equals(vigilante.getRol())) return;
         setActivo(btnAuditoria, btnAcceso);
         if (auditoriaView == null) auditoriaView = new AuditoriaView();
         contentArea.getChildren().setAll(auditoriaView.getRoot());
     }
 
     private void setActivo(Button activo, Button... otros) {
-        activo.getStyleClass().setAll("sidebar-btn", "sidebar-btn-active");
-        for (Button b : otros) b.getStyleClass().setAll("sidebar-btn");
+        if (activo != null) activo.getStyleClass().setAll("sidebar-btn", "sidebar-btn-active");
+        for (Button b : otros) {
+            if (b != null && b.getText() != null) b.getStyleClass().setAll("sidebar-btn");
+        }
     }
 
     private Button sidebarBtn(String text) {

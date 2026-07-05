@@ -45,7 +45,12 @@ public class AccesoView {
         this.vigilante = vigilante;
         root = new BorderPane();
         root.setStyle("-fx-background-color: #0D1117; -fx-padding: 20;");
-        root.setLeft(buildFormulario());
+        ScrollPane scrollForm = new ScrollPane(buildFormulario());
+        scrollForm.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollForm.setFitToWidth(true);
+        scrollForm.setPrefWidth(340);
+        scrollForm.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        root.setLeft(scrollForm);
         root.setCenter(buildTabla());
         iniciarMonitoreo();
     }

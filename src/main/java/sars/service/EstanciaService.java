@@ -16,9 +16,17 @@ public class EstanciaService {
     private final TagDAO tagDAO = new TagDAO();
     private final VisitanteDAO visitanteDAO = new VisitanteDAO();
 
+    private void validarDni(String dni) throws Exception {
+        if (dni == null || !dni.matches("[0-9]{8}")) {
+            throw new Exception("DNI inválido. Debe contener exactamente 8 dígitos numéricos.");
+        }
+    }
+
     public int registrarIngreso(String dni, String nombre, String tipo, String subtipo,
                                 String destino, String tipoIngreso, String descVehiculo,
                                 int tiempoMax, int idVigilante, Tag tagLeido) throws Exception {
+
+        validarDni(dni);
 
         Visitante existente = visitanteDAO.buscarPorDni(dni);
         if (existente != null) {

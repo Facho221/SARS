@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import sars.view.LoginView;
+import sars.database.DatabaseConnection;
 
 public class MainApp extends Application {
 
@@ -23,7 +24,7 @@ public class MainApp extends Application {
 
     @Override
     public void stop() {
-        sars.database.DatabaseConnection.close();
+        DatabaseConnection.close();
     }
 
     public static void main(String[] args) {
