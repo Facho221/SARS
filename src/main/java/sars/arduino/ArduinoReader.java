@@ -20,40 +20,41 @@ public class ArduinoReader {
     }
 
     public void iniciar() {
-        puerto.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 2000, 0);
+        puerto.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 1000, 0);
 
         if (!puerto.openPort()) {
             System.err.println("[ARDUINO] ERROR: No se pudo abrir " + puerto.getSystemPortName());
             return;
         }
 
-        try { Thread.sleep(500); } catch (InterruptedException e) {}
+        try { Thread.sleep(2000); } catch (InterruptedException e) {}
 
         activo = true;
         hilo = new Thread(() -> {
-            try {
-                BufferedReader br = new BufferedReader(new InputStreamReader(puerto.getInputStream()));
-                String linea;
-                while (activo) {
-                    if (br.ready() && (linea = br.readLine()) != null) {
-                        String codigo = linea.trim().toUpperCase();
-                        if (!codigo.isEmpty()
-                                && !codigo.contains("LISTO")
-                                && !codigo.contains("SARS")
-                                && !codigo.contains("ESCANEANDO")) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(puerto.getInputStream()));
+            while (activo) {
+                try {
+                    if (br.ready()) {
+                        String linea = br.readLine();
+                        if (linea != null) {
+                            String codigo = linea.trim().toUpperCase();
+                            if (!codigo.isEmpty()
+                                    && !codigo.contains("LISTO")
+                                    && !codigo.contains("SARS")
+                                    && !codigo.contains("ESCANEANDO")) {
 
-                            String codigoLimpio = codigo.replaceAll("[^A-Z0-9]", "");
-
-                            if (!codigoLimpio.isEmpty()) {
-                                final String c = codigoLimpio;
-                                Platform.runLater(() -> onTagLeido.accept(c));
+                                String codigoLimpio = codigo.replaceAll("[^A-Z0-9]", "");
+                                if (!codigoLimpio.isEmpty()) {
+                                    final String c = codigoLimpio;
+                                    Platform.runLater(() -> onTagLeido.accept(c));
+                                }
                             }
                         }
                     }
                     Thread.sleep(100);
+                } catch (Exception e) {
+                    if (activo) System.err.println("[ARDUINO] Error de lectura (ignorado): " + e.getMessage());
                 }
-            } catch (Exception e) {
-                if (activo) System.err.println("[ARDUINO] Error: " + e.getMessage());
             }
         }, "arduino-reader");
 
