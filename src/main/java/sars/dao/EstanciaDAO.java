@@ -80,7 +80,6 @@ public class EstanciaDAO {
             ps.setInt(1, idEstancia);
             ps.executeUpdate();
         }
-        // Liberar tag
         String sqlTag = """
             UPDATE tag SET estado_tag='Disponible'
             WHERE id_tag = (SELECT id_tag FROM estancia WHERE id_estancia=?)

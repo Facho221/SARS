@@ -7,9 +7,9 @@ public class Estancia {
     private int           idEstancia;
     private LocalDateTime horaIngreso;
     private LocalDateTime horaSalida;
-    private String        estado;          // Normal / Advertencia / Alerta / Finalizado
+    private String        estado;
     private String        destino;
-    private String        tipoIngreso;     // Peatón / Vehículo
+    private String        tipoIngreso;
     private String        descVehiculo;
     private int           tiempoMaxMinutos;
     private String        dniVisitante;

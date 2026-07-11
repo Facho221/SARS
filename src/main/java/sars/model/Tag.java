@@ -3,7 +3,7 @@ package sars.model;
 public class Tag {
     private int    idTag;
     private String codigoRfid;
-    private String estadoTag;  // Disponible / Asignado
+    private String estadoTag;
 
     public Tag() {}
     public Tag(int idTag, String codigoRfid, String estadoTag) {

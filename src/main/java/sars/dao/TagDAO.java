@@ -20,13 +20,9 @@ public class TagDAO {
         return lista;
     }
 
-    /**
-     * Busca un tag por su código RFID, asegurando limpieza de formato.
-     */
     public Tag buscarPorRfid(String codigoRfid) throws SQLException {
         String codigoLimpio = codigoRfid.trim().toUpperCase();
 
-        // ESTA LÍNEA ES LA CLAVE
         System.out.println("DEBUG: Buscando en BD el código: [" + codigoLimpio + "] con longitud: " + codigoLimpio.length());
 
         String sql = "SELECT * FROM tag WHERE codigo_rfid=?";

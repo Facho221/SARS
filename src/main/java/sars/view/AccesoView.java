@@ -17,6 +17,7 @@ import sars.service.AlertaService;
 import sars.service.EstanciaService;
 import sars.service.TagService;
 import javafx.application.Platform;
+import sars.util.SonidoAlerta;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -101,7 +102,7 @@ public class AccesoView {
         cbTipoIngreso.valueProperty().addListener((obs, old, val) ->
                 txtDescVehiculo.setDisable(!"Vehículo".equals(val)));
 
-        cbTiempoMax = combo("Tiempo máximo (min) *", "15","30","60","90","120");
+        cbTiempoMax = combo("Tiempo máximo (min) *", "2","5","15","30","60","90","120");
         cbTiempoMax.getSelectionModel().select("60");
 
         Button btnRegistrar = new Button("Registrar y Vincular Tag");
@@ -323,6 +324,8 @@ public class AccesoView {
     }
 
     private void mostrarModalAlerta(Estancia e) {
+        SonidoAlerta.reproducir();
+
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("⚠ ALERTA DE PERMANENCIA");
         alert.setHeaderText("Tiempo excedido — " + e.getNombreVisitante());
@@ -332,7 +335,6 @@ public class AccesoView {
                         "Tiempo máximo: " + e.getTiempoMaxMinutos() + " min\n\n" +
                         "Por favor verifica la situación del visitante.");
 
-        // De esta manera JavaFX saca el modal de la animación y lo agenda de forma segura
         Platform.runLater(() -> {
             alert.showAndWait();
         });
