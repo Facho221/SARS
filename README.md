@@ -2,6 +2,12 @@
 
 Sistema de escritorio para el control de acceso residencial mediante tarjetas RFID, desarrollado en Java/JavaFX con conexión a base de datos PostgreSQL.
 
+## Descarga de la versión ejecutable
+
+La versión lista para usar (`.jar` + `.bat`) no está en el código fuente de este repositorio. Descárgala desde la sección **[Releases](https://github.com/Facho221/SARS/releases)**, donde encontrarás:
+- `smart-access-residential-1.0.jar` — aplicación ejecutable (incluye todas las dependencias)
+- `ejecutar.bat` — script de arranque para Windows
+
 ## Requisitos previos
 
 Antes de ejecutar la aplicación, asegúrate de tener instalado:
@@ -18,7 +24,7 @@ Antes de ejecutar la aplicación, asegúrate de tener instalado:
 
 1. Abre pgAdmin o tu cliente de PostgreSQL preferido.
 2. Crea una base de datos llamada `sars_db;` (respeta el nombre exacto, incluyendo el punto y coma).
-3. Restaura el respaldo incluido en la carpeta `scripts_bd/backup_sars.sql`:
+3. Restaura el respaldo incluido en la carpeta `scripts_bd/` de este repositorio (`scripts_bd/backup_sars.sql`):
 
    Desde la terminal (ajusta usuario si es distinto a `postgres`):
    ```bash
@@ -41,11 +47,10 @@ db.password=TU_PASSWORD
 
 ## 3. Ejecutar la aplicación
 
-En la carpeta `bin/` encontrarás:
-- `smart-access-residential-1.0.jar` — aplicación ejecutable (incluye todas las dependencias)
-- `ejecutar.bat` — script de arranque para Windows
-
-Simplemente haz doble clic en **`ejecutar.bat`**.
+1. Ve a la sección **[Releases](https://github.com/Facho221/SARS/releases)** de este repositorio.
+2. Descarga `smart-access-residential-1.0.jar` y `ejecutar.bat` de la última versión publicada.
+3. Colócalos juntos en la misma carpeta.
+4. Haz doble clic en **`ejecutar.bat`**.
 
 Si prefieres ejecutarlo manualmente desde la terminal:
 ```bash
@@ -54,7 +59,7 @@ java -jar smart-access-residential-1.0.jar
 
 ## Compilar desde el código fuente (opcional)
 
-Si quieres compilar el proyecto tú mismo en lugar de usar el `.jar` ya generado:
+Si quieres compilar el proyecto tú mismo en lugar de usar el `.jar` publicado en Releases:
 
 ```bash
 mvn clean package
